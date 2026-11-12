@@ -59,7 +59,7 @@ Results are averaged over questions, with 95\% question-bootstrap confidence int
 
 We agree that a comparison with VPPO is valuable. It was not included in the original manuscript because we recognized that transferring the algorithm from images to audio requires several critical design and implementation choices, particularly in how the audio should be corrupted. To address the reviewer's suggestion within the time and compute available for the rebuttal, we conducted a set of small-scale experiments on \textbf{MOSS-Audio-8B-Thinking}, a smaller audio reasoning model from a different model family than the Qwen3-Omni model used in the paper. We trained for \textbf{128 steps} with \textbf{LoRA rank 16, alpha 32}, keeping the original weights, audio encoder, and audio-to-language aligner frozen.
 
-Transferring VPPO requires defining an audio counterpart to its image corruption. We occluded \textbf{50\% of approximately 100 ms log-mel blocks} before the audio encoder, replacing all frequency bins in each selected block with the clip's low-energy floor. This preserves audio length and prompt text. We retained VPPO's KL-based selection of the top \textbf{40\%} of response tokens and its trajectory-advantage shaping. All benchmark evaluations used clean audio.
+Transferring VPPO requires defining an audio counterpart to its image corruption. We occluded \textbf{50\% of approximately 100 ms log-mel blocks} before the audio encoder, replacing all frequency bins in each selected block with the clip's low-energy floor. This preserves audio length and prompt text. We retained VPPO's KL-based selection of the top \textbf{40\%} of response tokens and its trajectory-advantage shaping. All benchmark evaluations used clean audio. MMSU uses the full \textbf{5,000-example evaluation set}.
 
 \par\medskip
 \begingroup
@@ -71,14 +71,14 @@ Transferring VPPO requires defining an audio counterpart to its image corruption
 \textbf{Benchmark} & \textbf{No fine-tuning} & \textbf{GRPO} & \textbf{Audio-adapted VPPO} & \textbf{MAPO} \\
 \midrule
 MMAU & 76.50 & 74.70 & 75.90 & \textbf{76.90} \\
-MMSU & 70.80 & \textbf{71.60} & 71.20 & 71.30 \\
+MMSU & 72.32 & 73.64 & 73.76 & \textbf{74.06} \\
 MMAR & 63.20 & 64.00 & 65.30 & \textbf{65.40} \\
 MMAU-Pro & 56.97 & 56.12 & 57.15 & \textbf{57.48} \\
 \bottomrule
 \end{tabularx}
 \par\endgroup\medskip
 
-MAPO has the highest score on MMAU, MMAR, and MMAU-Pro, and it is the only one of the three methods that improves on the model without fine-tuning on all four benchmarks. Relative to audio-adapted VPPO, MAPO is ahead by \textbf{1.00 point on MMAU} and 0.33 on MMAU-Pro, and the two are on par on MMSU and MMAR. Audio-adapted VPPO also improves over GRPO on MMAU, MMAR, and MMAU-Pro, which is consistent with the reviewer's expectation that token-level modality-aware optimization transfers to audio.
+MAPO has the highest score on all four benchmarks, and it is the only one of the three methods that improves on the model without fine-tuning on all four. Relative to audio-adapted VPPO, MAPO is ahead by \textbf{1.00 point on MMAU}, 0.30 on MMSU, 0.10 on MMAR, and 0.33 on MMAU-Pro. Audio-adapted VPPO also improves over GRPO on all four benchmarks, which is consistent with the reviewer's expectation that token-level modality-aware optimization transfers to audio.
 
 We agree that VPPO's optimization rule is modality agnostic, yet we also found in practice that the corruption mechanism it depends on is not. VPPO measures each token's dependence on the input by comparing predictions on the original input with predictions on a corrupted copy, and its published corruption masks patches on a fixed two-dimensional image grid. Audio does not offer a direct counterpart, because clips vary in length, information is carried over time, and the relevant evidence is often concentrated in a brief sound or a speaker transition. An audio version therefore requires choices about the masking axis (time, frequency, or both), the block duration, and the corruption strength, and under any fixed choice the same masking ratio can remove very different amounts of evidence from different clips. Since these choices determine which tokens VPPO selects, they also shape its updates. MAPO avoids this dependence by using a reference with the audio removed entirely, so the same definition applies unchanged to clips of any length and content, while its attention loss adds a second grounding signal computed directly from the model.
 

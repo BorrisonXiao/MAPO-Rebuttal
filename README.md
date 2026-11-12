@@ -4,7 +4,7 @@ A reading and copying page for the four reviewer responses. The Markdown in
 `responses/` is preserved byte for byte. Rendering changes only presentation,
 including headings, blockquotes, tables, and mathematical notation.
 
-Expected GitHub Pages address: https://borrisonxiao.github.io/MAPO-Rebuttal/
+Live page: https://borrisonxiao.github.io/MAPO-Rebuttal/
 
 The page offers whole-response and per-point Markdown copying, individual source
 downloads, a ZIP of all four originals, and light/dark themes. Copy buttons do not
@@ -26,10 +26,19 @@ Open http://localhost:8000/. To snapshot newer originals before rendering:
 python build.py --source-dir /path/to/responses/claude
 ```
 
-Commit the changed `responses/` and generated `site/` files. The workflow rebuilds,
-checks source preservation, and deploys `site/` on every push to `main`.
-In repository Settings → Pages, select **GitHub Actions** as the build source.
-The workflow requires Pages to be enabled by a repository administrator first.
+Commit the changed `responses/` and generated `site/` files, then push `main`.
+The workflow rebuilds and checks source preservation on every push to `main`.
+Publish the committed output with normal Git authentication:
+
+```bash
+python publish.py
+```
+
+GitHub Pages serves the root of the `gh-pages` branch. The helper validates the
+site and makes a normal, non-forced push to that branch; GitHub then builds and
+deploys it automatically. Check the successful **pages build and deployment** run
+and the live page before sharing an update. This avoids requiring a separate
+GitHub API token. Git's user name and email must be configured for new commits.
 
 ## Source preservation and dependencies
 

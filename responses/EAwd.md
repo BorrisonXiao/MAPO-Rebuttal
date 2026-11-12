@@ -1,0 +1,55 @@
+Thank you for your thoughtful comments. We were glad to see that you share our concern about models losing track of the audio during long reasoning traces, the problem that motivated MAPO.
+
+**1. Given the small average accuracy gain, how significant are the method and results?**
+
+We agree that the significance of the method should be established through its effect on both task performance and audio use. In fact, our results do show consistent gains across benchmarks and seeds and, more importantly, a shift toward sustained use of acoustic evidence during reasoning, which is the behavioral change we aim to encourage with MAPO. The consistency across seeds and both fine-tuning settings supports a repeatable benefit over GRPO, averaging 2.30 percentage points with full fine-tuning and 1.91 with LoRA (Table 1). On MMSU, the 2.87-point gain over GRPO supports improved spoken-language understanding. The category breakdown further shows gains over Base Thinking in perception (+2.17 points) and reasoning (+4.01), suggesting better recognition and use of acoustic information (Appendix D).
+
+Although absolute accuracy gains depend on the backbone's perceptual and reasoning capabilities, as discussed in Appendix J, our controlled analyses help identify the intended change in audio use. MAPO better preserves audio attention than Base Thinking at the transition into reasoning, after accounting for the growing text context (Appendix E.1). On the 200-example audio-essential MMAU subset, MAPO has higher clean accuracy than GRPO (67% vs. 60%) and a larger accuracy drop without audio (55 vs. 40 points), indicating greater audio dependence (Appendix E.2). Masking highly attended audio regions also causes a larger accuracy drop than masking an equal duration at random, supporting the relevance of the attended evidence (Appendix E.4). Together, these results support our claim that MAPO strengthens acoustic grounding during reasoning and improves the model's performance across audio benchmarks.
+
+**2. Are the gains mainly from instruction following? What are the MMAU-Pro results without that subset?**
+
+We agree that the instruction-following subset should be examined separately. Part of the gain on this subset can be attributed to the format reward that GRPO and MAPO share, since GRPO also improves on it, while MAPO improves further (95.40 vs. 90.80) and its advantage over GRPO does not depend on this subset. The subset contains 87 of the 5,304 scored MMAU-Pro questions (1.6%), and the table below gives the category scores together with the overall score recomputed without it.
+
+| Model | Instruction following (87) | Closed-ended (4,592) | Open-ended (625) | Overall | Overall without instruction following |
+|---|---:|---:|---:|---:|---:|
+| Base Thinking | 62.07 | 59.63 | 84.77 | 62.63 | 62.64 |
+| GRPO | 90.80 | 60.17 | 83.48 | 63.42 | 62.96 |
+| MAPO | 95.40 | 62.00 | 85.32 | 65.29 | **64.79** |
+
+Each row is one evaluation run with full fine-tuning, and the three-seed overall means in Table 1 are 63.35 for GRPO and 64.98 for MAPO. Without the subset, MAPO remains **2.15 points** above Base Thinking and **1.83 points** above GRPO, compared with 2.66 and 1.87 with it, so instruction following accounts for less than 0.1 point of MAPO's gain over GRPO. MAPO's lead over GRPO is also nearly the same on closed-ended (+1.83) and open-ended (+1.84) questions, which together make up 98% of the benchmark. For GRPO, by comparison, instruction following accounts for 0.47 of its 0.79-point gain over the base model.
+
+The other benchmarks support the same conclusion: with full fine-tuning, MAPO retains a 2.52-point average advantage over GRPO across MMAU, MMAR, and MMSU (Table 1).
+
+**3. Could KL divergence be used instead of the entropy-based signal?**
+
+We agree that KL divergence could also provide a useful reweighting signal. In fact, the two signals are strongly correlated in practice, supporting the entropy gap as a practical indicator of audio-conditioned distribution change. At a fixed checkpoint and with an identical text prefix, a nonzero entropy gap between audio-present and audio-removed predictions necessarily implies different token distributions and therefore positive KL divergence. Audio can make predictions either more concentrated or more uncertain. The absolute entropy gap captures both effects. KL also detects changes that preserve entropy, so their empirical agreement helps establish how well entropy tracks distribution changes during reasoning.
+
+We compared the absolute entropy gap with exact KL(audio-present || audio-removed) using the base Qwen3-Omni-Thinking model on 100 MMAU questions, covering 45,702 token positions. Both conditions used identical saved response prefixes. The agreement holds across sound, music, and speech:
+
+| Question subset | Mean within-response Spearman correlation [95% CI] | Top-20% token overlap |
+|---|---:|---:|
+| All | **0.865 [0.857, 0.873]** | **63.5%** |
+| Sound | 0.841 [0.828, 0.854] | 59.6% |
+| Music | 0.854 [0.839, 0.868] | 60.8% |
+| Speech | 0.901 [0.888, 0.914] | 70.1% |
+
+Results are averaged over questions, with 95% question-bootstrap confidence intervals. The overall correlation remains **0.846** after removing broad position trends within each response. The **63.5%** top-token overlap is well above the **20.1%** expected under independent selections, showing that the two signals prioritize substantially overlapping tokens. Together, these results support the entropy gap as a practical signal for identifying positions where audio changes the model's predictions, consistent with its role in MAPO's token reweighting.
+
+**4. Can VPPO be applied to audio, and why is it not included as a baseline?**
+
+We agree that a comparison with VPPO is valuable. It was not included in the original manuscript because we recognized that transferring the algorithm from images to audio requires several critical design and implementation choices, particularly in how the audio should be corrupted. To address the reviewer's suggestion within the time and compute available for the rebuttal, we conducted a set of small-scale experiments on **MOSS-Audio-8B-Thinking**, a smaller audio reasoning model from a different model family than the Qwen3-Omni model used in the paper. We trained for **128 steps** with **LoRA rank 16, alpha 32**, keeping the original weights, audio encoder, and audio-to-language aligner frozen.
+
+Transferring VPPO requires defining an audio counterpart to its image corruption. We occluded **50% of approximately 100 ms log-mel blocks** before the audio encoder, replacing all frequency bins in each selected block with the clip's low-energy floor. This preserves audio length and prompt text. We retained VPPO's KL-based selection of the top **40%** of response tokens and its trajectory-advantage shaping. All benchmark evaluations used clean audio.
+
+| Benchmark | No fine-tuning | GRPO | Audio-adapted VPPO | MAPO |
+|---|---:|---:|---:|---:|
+| MMAU | 76.50 | 74.70 | 75.90 | **76.90** |
+| MMSU | 70.80 | **71.60** | 71.20 | 71.30 |
+| MMAR | 63.20 | 64.00 | 65.30 | **65.40** |
+| MMAU-Pro | 56.97 | 56.12 | 57.15 | **57.48** |
+
+MAPO has the highest score on MMAU, MMAR, and MMAU-Pro, and it is the only one of the three methods that improves on the model without fine-tuning on all four benchmarks. Relative to audio-adapted VPPO, MAPO is ahead by **1.00 point on MMAU** and 0.33 on MMAU-Pro, and the two are on par on MMSU and MMAR. Audio-adapted VPPO also improves over GRPO on MMAU, MMAR, and MMAU-Pro, which is consistent with the reviewer's expectation that token-level modality-aware optimization transfers to audio.
+
+We agree that VPPO's optimization rule is modality agnostic, yet we also found in practice that the corruption mechanism it depends on is not. VPPO measures each token's dependence on the input by comparing predictions on the original input with predictions on a corrupted copy, and its published corruption masks patches on a fixed two-dimensional image grid. Audio does not offer a direct counterpart, because clips vary in length, information is carried over time, and the relevant evidence is often concentrated in a brief sound or a speaker transition. An audio version therefore requires choices about the masking axis (time, frequency, or both), the block duration, and the corruption strength, and under any fixed choice the same masking ratio can remove very different amounts of evidence from different clips. Since these choices determine which tokens VPPO selects, they also shape its updates. MAPO avoids this dependence by using a reference with the audio removed entirely, so the same definition applies unchanged to clips of any length and content, while its attention loss adds a second grounding signal computed directly from the model.
+
+In the revision, we will expand the discussion of VPPO in Section 2 to distinguish its modality-agnostic optimization rule from the corruption mechanism it depends on, informed by the audio adaptation above. We will also include the comparison between the entropy gap and KL divergence and the MMAU-Pro category results in the appendix, and clarify the source of the instruction-following gain.

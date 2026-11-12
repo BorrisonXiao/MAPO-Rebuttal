@@ -1,0 +1,49 @@
+% Overleaf main document. Compile with pdfLaTeX (the default).
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{cmap}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{microtype}
+\usepackage{array,tabularx,booktabs}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\definecolor{ReviewQuote}{HTML}{4B5563}
+\definecolor{LinkBlue}{HTML}{225C94}
+\hypersetup{colorlinks=true,linkcolor=LinkBlue,urlcolor=LinkBlue,
+  pdftitle={MAPO rebuttal drafts},pdfauthor={}}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.65em}
+\setlength{\emergencystretch}{3em}
+\titleformat{\section}{\Large\bfseries}{}{0pt}{}
+\titleformat{\subsection}{\normalsize\bfseries}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{1.5em}{0.7em}
+\begin{document}
+\pdfbookmark[0]{Reviewer EAwd}{reviewer-EAwd}
+\section*{Reviewer EAwd}
+\input{responses/EAwd}
+
+\clearpage
+
+\pdfbookmark[0]{Reviewer zXPm}{reviewer-zXPm}
+\section*{Reviewer zXPm}
+\input{responses/zXPm}
+
+\clearpage
+
+\pdfbookmark[0]{Reviewer kaLY}{reviewer-kaLY}
+\section*{Reviewer kaLY}
+\input{responses/kaLY}
+
+\clearpage
+
+\pdfbookmark[0]{Reviewer TM2s}{reviewer-TM2s}
+\section*{Reviewer TM2s}
+\input{responses/TM2s}
+
+\end{document}

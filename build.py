@@ -136,10 +136,10 @@ def build(source_dir=None):
 <aside class="sidebar" aria-label="Response navigation">
 <a class="brand" href="#top">MAPO<span>Rebuttal drafts</span></a>
 <nav aria-label="Reviewers and points">{''.join(nav)}</nav>
-<div class="sidebar-footer"><a href="responses.zip" download>Download all Markdown ↓</a><a href="https://github.com/BorrisonXiao/MAPO-Rebuttal">View repository ↗</a><button id="theme-toggle" type="button">Switch theme</button></div>
+<div class="sidebar-footer"><a href="mapo-rebuttal-overleaf.zip" download>Download Overleaf project ↓</a><a href="responses.zip" download>Download all Markdown ↓</a><a href="https://github.com/BorrisonXiao/MAPO-Rebuttal">View repository ↗</a><button id="theme-toggle" type="button">Switch theme</button></div>
 </aside>
 <main id="main">
-<header class="page-header" id="top"><p class="eyebrow">Collaborator reading copy</p><h1>MAPO rebuttal drafts</h1><p>Four reviewer responses, with tables and equations rendered for reading. <strong>Copy Markdown</strong> copies the original text, ready to paste into OpenReview.</p><div class="mobile-reviewers" aria-label="Jump to reviewer">{''.join(f'<a href="#{r}">{r}</a>' for r in REVIEWERS)}</div></header>
+<header class="page-header" id="top"><p class="eyebrow">Collaborator reading copy</p><h1>MAPO rebuttal drafts</h1><p>Four reviewer responses, with tables and equations rendered for reading. <strong>Copy Markdown</strong> copies the original text, ready to paste into OpenReview.</p><div class="reviewer-actions page-downloads"><a class="button" href="mapo-rebuttal-overleaf.zip" download>Download Overleaf project (.zip)</a></div><div class="mobile-reviewers" aria-label="Jump to reviewer">{''.join(f'<a href="#{r}">{r}</a>' for r in REVIEWERS)}</div></header>
 {''.join(articles)}
 <footer class="page-footer">Rendered from the original Markdown without content edits. <a href="source-manifest.json">Source checksums</a> · <a href="#top">Back to top ↑</a></footer>
 </main>
@@ -152,6 +152,8 @@ def build(source_dir=None):
 </html>
 '''
     (site / 'index.html').write_text(document, encoding='utf-8')
+    from build_overleaf import build_overleaf
+    build_overleaf()
     print(f'Built site/index.html: {len(REVIEWERS)} reviewers, {sum(len(v["points"]) for v in payload.values())} points, {table_number} tables. Original Markdown preserved.')
 
 

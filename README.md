@@ -11,6 +11,18 @@ downloads, a ZIP of all four originals, and light/dark themes. Copy buttons do n
 include the page navigation or other interface text. If clipboard access is
 unavailable, the original Markdown opens in a selectable text box.
 
+## Overleaf project
+
+Download [the Overleaf ZIP](https://borrisonxiao.github.io/MAPO-Rebuttal/mapo-rebuttal-overleaf.zip)
+and select **New Project → Upload Project** in Overleaf. Compile `main.tex` with
+pdfLaTeX, then edit the four files in `responses/`, one per reviewer. The ZIP
+contains ordinary editable LaTeX, the original Markdown, and a source manifest.
+Only formatting and LaTeX escaping are changed during conversion.
+
+`build.py` also regenerates `overleaf/` and the downloadable ZIP using
+`build_overleaf.py`. Edits made in Overleaf do not automatically update the
+Markdown source or webpage.
+
 ## Rebuild
 
 ```bash

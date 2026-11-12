@@ -1,0 +1,95 @@
+Thank you for the thoughtful review and for recognizing the importance of evaluating audio use alongside answer accuracy.
+
+\subsection*{1. Effect of the frozen reference on the entropy signal and token weights}
+
+\begin{quote}\small\color{ReviewQuote}
+I am not fully sure whether the entropy difference during training only reflects the effect of audio. The text-only reference model is frozen, while the policy model keeps changing.
+
+\end{quote}
+
+The entropy difference in training combines the effect of audio with a smaller shift introduced by training, and the token weights it produces stay close to those from a same-checkpoint reference. To separate the effect of audio from changes introduced by training, we measured next-token predictive entropy in three conditions: trained MAPO with audio, the same checkpoint without acoustic features, and the base model without acoustic features. The question, saved response prefix, and token positions were held fixed. Comparing MAPO with and without audio measures how audio changes the trained model's uncertainty. Comparing the two text-only predictions measures the entropy shift associated with training. An additional experiment gave the following mean absolute entropy differences:
+
+\par\medskip
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.2}
+\noindent\begin{tabularx}{\linewidth}{@{}LR@{}}
+\toprule
+\textbf{Comparison} & \textbf{Mean absolute entropy difference} \\
+\midrule
+MAPO w/ versus w/o audio & 0.445 nats \\
+MAPO w/o audio versus base w/o audio & 0.244 nats \\
+MAPO w/ audio versus base w/o audio & 0.622 nats \\
+\bottomrule
+\end{tabularx}
+\par\endgroup\medskip
+
+The text-only shift is therefore smaller than the within-MAPO audio/text effect, at about \textbf{55\% of its magnitude}. Because the reference entropy enters training only through the token weights of the two branches, we also examined how reference choice affects the resulting token weights in a separate replay of \textbf{100 MMAU questions and 44,269 saved response tokens}, using the released MAPO weighting rule. At the final checkpoint, which is the furthest in training from the frozen reference, frozen-reference and same-checkpoint weights have Spearman rank correlations of \textbf{0.860} for the policy branch and \textbf{0.866} for the inverse-attention branch. Changing the reference redistributes \textbf{2.8\%} and \textbf{2.5\%} of normalized weight mass, respectively. This close agreement at the end of training indicates that the two choices of reference give similar training signals.
+
+We use the frozen reference to reduce GPU memory overhead by reusing the model already maintained for GRPO's KL penalty, avoiding a separate entropy-reference model. A fixed reference also allows the text-only pass to be computed once per rollout batch and reused across the four optimizer updates (Appendix H.2), whereas a reference that follows the policy would need to be recomputed after every update. Given the smaller text-only shift and the strong agreement in normalized token weights, we regard this as a reasonable balance between preserving the weighting signal and limiting memory use and training time in our training setup.
+
+\subsection*{2. Audio-critical tokens and correctness of reasoning steps}
+
+\begin{quote}\small\color{ReviewQuote}
+Tokens in the same response still share the same sequence-level advantage. For example, an audio-related token could be correct, but receive a negative update because the final answer is wrong.
+
+\end{quote}
+
+The example is helpful because it distinguishes audio relevance from semantic correctness. MAPO uses the audio/text entropy gap to identify critical positions and reweight their policy-gradient terms. The shared sequence-level advantage still determines the direction of those terms, so a negative advantage would also apply to the locally correct token in the reviewer's example. This advantage is, however, computed relative to the eight completions sampled for the same question (Section 2), so when the same token also appears in completions that score above the group average it is reinforced there, and across the group the update tends to concentrate on what separates the better responses from the worse ones. Providing separate feedback for that token would require a finer-grained semantic assessment of the generated CoT, such as step-wise process rewards that evaluate individual reasoning steps.
+
+This form of supervision is complementary to MAPO's focus on acoustic grounding. Section 2 discusses MAPO's compatibility with sequence-level reward strategies. Step-wise CoT rewards could further refine which intermediate steps should be reinforced, while MAPO's weights determine their relative emphasis according to audio relevance. The two approaches can therefore guide the same policy optimization through complementary roles: reasoning supervision supplies finer-grained feedback on correctness, and MAPO directs learning toward audio-critical positions. We will add this discussion to the limitations in Appendix J.
+
+\subsection*{3. Completing the appendix baseline comparisons}
+
+\begin{quote}\small\color{ReviewQuote}
+There are quite a few missing results in the appendix. It would be better if the authors could explain these missing results, or fill in as many as possible.
+
+\end{quote}
+
+To fill in as many of the missing results as possible at this stage, we evaluated the public Covo-Audio-Chat and Step-Audio-R1 checkpoints on MMAR and MMAU-Pro, using their released model weights and audio encoders. The additional results are:
+
+\par\medskip
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.2}
+\noindent\begin{tabularx}{\linewidth}{@{}LRR@{}}
+\toprule
+\textbf{Model} & \textbf{MMAR accuracy (\%)} & \textbf{MMAU-Pro score (\%)} \\
+\midrule
+Covo-Audio-Chat & 50.80 & 47.40 \\
+Step-Audio-R1 & 70.20 & 57.27 \\
+\bottomrule
+\end{tabularx}
+\par\endgroup\medskip
+
+Our new MMAR evaluations cover all \textbf{1,000 evaluation cases}. For MMAU-Pro, we generated responses for all \textbf{5,305 released cases} and scored the \textbf{5,304 cases with valid grading metadata}. One annotation has an empty option list and is recorded as unscorable. MMAU-Pro scoring combines multiple-choice correctness, normalized open-answer grades, and instruction-following checks.
+
+We also located additional published results in the MiMo-Audio paper (Table 8). These will be included as cited scores from that evaluation:
+
+\par\medskip
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.2}
+\noindent\begin{tabularx}{\linewidth}{@{}LRR@{}}
+\toprule
+\textbf{Model} & \textbf{Published MMAR accuracy (\%)} & \textbf{Published MMAU-Pro score (\%)} \\
+\midrule
+Audio Flamingo 3 & 58.50 & 51.70 \\
+MiMo-Audio-7B-Instruct & 63.60 & 53.35 \\
+\bottomrule
+\end{tabularx}
+\par\endgroup\medskip
+
+We will also incorporate our new evaluations and their category breakdowns, together with these additional cited scores, into the appendix, with clear attribution of each source. These additions broaden the coverage of public audio models and make the comparison easier to assess, and the dashes that remain are mostly for human baselines and proprietary systems.
+
+\subsection*{4. Figure readability and manuscript organization}
+
+\begin{quote}\small\color{ReviewQuote}
+Minor issues: some figures are difficult to read. For example, the labels and legends in Figures 2 and 8 are quite small, and the text above the plots in Figure 8 is shortened. Also, the authors have provided rich information in the appendix, but the main text still has some blank space, so I think maybe they can organize the manuscript better.
+
+\end{quote}
+
+Thank you for the helpful suggestions on presentation. We will do our best to incorporate them in the revision by improving the readability of the labels and legends in Figures 2 and 8, restoring the full text above the plots in Figure 8, and using the available main-text space to present key appendix findings more prominently.
